@@ -6,6 +6,9 @@
 import express from "express";
 import type { Request, Response, NextFunction } from "express"; // Importng type of Request and Response
 import dotenv from "dotenv";
+import { errorHandler } from "./middleware/errorHandler.js";
+import { temp } from "./controllers/test.controller.js";
+import tasksRouter from "./routes/task.routes.js"
 
 // dotenv configuration for path declaration for env file
 dotenv.config({ path: "./.env" });
@@ -14,6 +17,8 @@ dotenv.config({ path: "./.env" });
 const PORT = process.env.PORT || 3000;
 
 const app = express();
+
+app.use(express.json({ limit: "16kb" }));
 
 // =========== Request Middleware ================
 const requestMiddleWare = (req: Request, res: Response, next: NextFunction): void => { // defining custom middlware
@@ -30,9 +35,10 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Hello");
 });
 
-// Generic Request
-import { temp } from "./controllers/test.controlller.js";
+app.use("/t", tasksRouter)
 
+
+// Generic Request
 app.get("/test/:id", temp)
 
 app.listen(PORT, () => {
@@ -41,5 +47,4 @@ app.listen(PORT, () => {
 
 
 // using error handler
-import { errorHandler } from "./middleware/errorHandler.js";
 app.use(errorHandler)

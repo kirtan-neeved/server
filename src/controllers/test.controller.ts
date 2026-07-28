@@ -12,7 +12,7 @@ type UserParams = {
 //     ReqQuery,
 //     Locals
 // >
-const temp = async (
+const temp = (
   req: Request<UserParams, {}, {}, {}, {}>, 
   res: Response,
 ) => {
