@@ -38,3 +38,8 @@ app.get("/test/:id", temp)
 app.listen(PORT, () => {
   console.log(`Server is listening at PORT ${PORT}`);
 });
+
+
+// using error handler
+import { errorHandler } from "./middleware/errorHandler.js";
+app.use(errorHandler)
