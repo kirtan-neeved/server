@@ -30,6 +30,11 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Hello");
 });
 
+// Generic Request
+import { temp } from "./controllers/test.controlller.js";
+
+app.get("/test/:id", temp)
+
 app.listen(PORT, () => {
   console.log(`Server is listening at PORT ${PORT}`);
 });
