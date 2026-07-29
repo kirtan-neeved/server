@@ -5,32 +5,35 @@ import type { Tasks, TasksParams } from "../types/tasks.types.js";
 import { containsId } from "../utils/containsId.js";
 import { isEmptyString } from "../utils/isEmptyString.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { Task } from "../models/task.model.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 let tasks: Tasks[] = [];
 
-const createTask = (req: Request<{}, {}, Tasks, {}, {}>, res: Response) => {
-  const { name, description, priority } = req.body;
+const createTask = asyncHandler(
+  async (req: Request<{}, {}, Tasks, {}, {}>, res: Response) => {
+    const { name, description, priority } = req.body;
 
-  if (!name || name === "") {
-    throw new ApiError(400, "Please provide name of task");
-  }
+    if (isEmptyString(name)) {
+      throw new ApiError(400, "Please provide name of task");
+    }
 
-  // generating random id for this task
-  const taskId = generateId();
+    const createdTask = await Task.create({
+      name,
+      description,
+      priority,
+    });
 
-  // add task to task array
-  tasks.push({
-    taskId,
-    name,
-    description,
-    priority,
-    date: new Date(),
-  });
+    if (!createdTask)
+      throw new ApiError(500, "Something went wrong while creating task");
 
-  return res
-    .status(201)
-    .json(new ApiResponse(201, {}, "Task added successfully."));
-};
+    const task = await Task.findById(createdTask._id);
+
+    return res
+      .status(201)
+      .json(new ApiResponse(201, task, "Task added successfully."));
+  },
+);
 
 const getTasks = (req: Request, res: Response) => {
   if (tasks.length === 0)
