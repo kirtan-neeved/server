@@ -1,14 +1,9 @@
-enum Priority {
-  Low = "LOW",
-  Medium = "MEDIUM",
-  High = "HIGH",
-}
 
 type Tasks = {
   taskId: string;
   name: string;
   description: string;
-  priority: Priority;
+  priority: "Low" | "High" | "Medium";
   date: Date;
 };
 
