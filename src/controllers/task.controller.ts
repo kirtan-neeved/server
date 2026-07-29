@@ -7,6 +7,7 @@ import { isEmptyString } from "../utils/isEmptyString.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Task } from "../models/task.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { validateMongoId } from "../utils/validateMongoId.js";
 
 let tasks: Tasks[] = [];
 
@@ -48,72 +49,78 @@ const getAllTasks = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(200, allTasks, "Task fetched successfully"));
 });
 
-const deleteTask = (req: Request<TasksParams>, res: Response) => {
-  const { taskId } = req.params;
+const deleteTask = asyncHandler(
+  async (req: Request<TasksParams>, res: Response) => {
+    const { taskId } = req.params;
 
-  // =========== Edge cases ===========
+    // =========== Edge cases ===========
 
-  // if no string has been passed by user
-  if (isEmptyString(taskId))
-    throw new ApiError(400, "Task id is required for updating task details.");
+    // if id is empty or invalid
+    validateMongoId(taskId);
+    // ===================================
 
-  // if task does not exists for this id
-  if (!containsId(taskId, tasks))
-    throw new ApiError(404, "Task not found for this id");
+    const foundTask = await Task.findById(taskId);
 
-  // ===================================
+    if (!foundTask) throw new ApiError(404, "No task found for this id");
 
-  // remove from tasks array
-  tasks = tasks.filter((t) => t.taskId !== taskId);
+    // delete task
+    const deletedTask = await Task.findByIdAndDelete(taskId);
+    console.log(deleteTask);
 
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        {},
-        `Task deleted successfully for taskId: ${taskId}`,
-      ),
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          {},
+          `Task deleted successfully for taskId: ${taskId}`,
+        ),
+      );
+  },
+);
+
+const updateTask = asyncHandler(
+  async (req: Request<TasksParams, {}, Tasks>, res: Response) => {
+    const { taskId } = req.params;
+    const { name, description, priority } = req.body;
+
+    // =========== Edge cases ===========
+
+    // validating ID
+    validateMongoId(taskId);
+
+    // if task name is empty
+    if (isEmptyString(name))
+      throw new ApiError(400, "Task name id required for updating task.");
+
+    // ===================================
+    const foundTask = await Task.findById(taskId);
+
+    if (!foundTask) throw new ApiError(404, "No task found for this id");
+
+    const updatedTask = await Task.findByIdAndUpdate(
+      taskId,
+      {
+        name,
+        description,
+        priority,
+      },
+      { returnDocument: "after" },
     );
-};
 
-const updateTask = (req: Request<TasksParams, {}, Tasks>, res: Response) => {
-  const { taskId } = req.params;
-  const { name, description, priority } = req.body;
+    if (!updateTask)
+      throw new ApiError(500, "Something went wrong while updating task");
 
-  // =========== Edge cases ===========
-
-  // if no string has been passed by user
-  if (isEmptyString(taskId))
-    throw new ApiError(400, "Task id is required for updating task details.");
-
-  // if task does not exists for this id
-  if (!containsId(taskId, tasks))
-    throw new ApiError(404, "Task not found for this id");
-
-  // if task name is empty
-  if (isEmptyString(name))
-    throw new ApiError(400, "Task name id required for updating task.");
-
-  // ===================================
-
-  const targetTask = tasks.find((task) => task.taskId === taskId);
-
-  if (targetTask) {
-    targetTask.name = name;
-    if (description) targetTask.description = description;
-    if (priority) targetTask.priority = priority;
-  }
-
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        targetTask,
-        "Task details has been updated successfully.",
-      ),
-    );
-};
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          updatedTask,
+          "Task details has been updated successfully.",
+        ),
+      );
+  },
+);
 
 export { createTask, getAllTasks, deleteTask, updateTask };
