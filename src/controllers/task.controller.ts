@@ -35,18 +35,18 @@ const createTask = asyncHandler(
   },
 );
 
-const getTasks = (req: Request, res: Response) => {
-  if (tasks.length === 0)
-    return res.status(200).json({
-      success: true,
-      message: "No task has been added yet.",
-      data: [],
-    });
+const getAllTasks = asyncHandler(async (req: Request, res: Response) => {
+  const allTasks = await Task.find({});
+
+  if (allTasks.length === 0)
+    return res
+      .status(200)
+      .json(new ApiResponse(200, [], "No task has been added yet."));
 
   return res
     .status(200)
-    .json(new ApiResponse(200, tasks, "Task fetched successfully"));
-};
+    .json(new ApiResponse(200, allTasks, "Task fetched successfully"));
+});
 
 const deleteTask = (req: Request<TasksParams>, res: Response) => {
   const { taskId } = req.params;
@@ -116,4 +116,4 @@ const updateTask = (req: Request<TasksParams, {}, Tasks>, res: Response) => {
     );
 };
 
-export { createTask, getTasks, deleteTask, updateTask };
+export { createTask, getAllTasks, deleteTask, updateTask };
